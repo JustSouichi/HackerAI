@@ -4,6 +4,7 @@
   "private": true,
   "main": "electron/main.js",
   "dependencies": {
+    "axios": "^1.7.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-scripts": "5.0.1",
@@ -21,7 +22,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "electron": "electron .",
-   "dev": "concurrently \"npm run electron\"",
+    "dev": "concurrently \"npm run electron\"",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

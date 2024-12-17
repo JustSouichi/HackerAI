@@ -1,27 +1,41 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 const EmailAnalyzer = () => {
   const [emailContent, setEmailContent] = useState('');
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const analyzeEmail = () => {
-    // Simulazione analisi semplice
+  const analyzeEmail = async () => {
     if (!emailContent.trim()) {
-      setResult({ status: 'error', message: 'No content provided!' });
+      setError('❌ Please enter email content.');
       return;
     }
 
-    // Logica fittizia: controlla parole chiave sospette
-    const suspiciousWords = ['urgent', 'password', 'click here', 'phishing'];
-    const containsSuspicious = suspiciousWords.some((word) =>
-      emailContent.toLowerCase().includes(word)
-    );
+    setLoading(true);
+    setError('');
+    setResult('');
 
-    if (containsSuspicious) {
-      setResult({ status: 'danger', message: '🚨 Suspicious content detected!' });
-    } else {
-      setResult({ status: 'safe', message: '✅ Email looks safe.' });
+    console.log("Sending request with content:", emailContent);
+
+    try {
+      console.log("Sending request to Flask API...");
+      const response = await axios.post('http://127.0.0.1:5000/analyze', {
+        content: emailContent,
+      });
+      console.log("Response received:", response.data);
+    
+      const aiResult = response.data.result[0];
+      setResult({
+        label: aiResult.label,
+        score: aiResult.score,
+      });
+    } catch (err) {
+      console.error("Error during API request:", err);
+      setError('❌ Error analyzing email. Please try again.');
     }
+    
   };
 
   return (
@@ -37,19 +51,27 @@ const EmailAnalyzer = () => {
       <button
         className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
         onClick={analyzeEmail}
+        disabled={loading}
       >
-        Analyze Email
+        {loading ? 'Analyzing...' : 'Analyze Email'}
       </button>
+
+      {error && (
+        <div className="mt-4 p-3 rounded bg-red-100 text-red-700">
+          {error}
+        </div>
+      )}
 
       {result && (
         <div
           className={`mt-4 p-3 rounded ${
-            result.status === 'danger'
+            result.label === 'Suspicious'
               ? 'bg-red-100 text-red-700'
               : 'bg-green-100 text-green-700'
           }`}
         >
-          {result.message}
+          <strong>Result:</strong> {result.label} <br />
+          <strong>Confidence:</strong> {(result.score * 100).toFixed(2)}%
         </div>
       )}
     </div>
