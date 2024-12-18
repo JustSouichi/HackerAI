@@ -1,79 +1,29 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React from 'react';
 
 const EmailAnalyzer = () => {
-  const [emailContent, setEmailContent] = useState('');
-  const [result, setResult] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const analyzeEmail = async () => {
-    if (!emailContent.trim()) {
-      setError('❌ Please enter email content.');
-      return;
-    }
-
-    setLoading(true); // Imposta il caricamento su true
-    setError('');
-    setResult('');
-
+  const launchScreenAnalyzer = async () => {
+    console.log("Attempting to launch the Python script...");
     try {
-      console.log("Sending request to Flask API...");
-      const response = await axios.post('http://127.0.0.1:5000/analyze', {
-        content: emailContent,
-      });
-      console.log("Response:", response.data);
-
-      const aiResult = response.data.result[0];
-      setResult({
-        label: aiResult.label,
-        score: aiResult.score,
-      });
-    } catch (err) {
-      console.error("Request failed:", err);
-      setError('❌ Error analyzing email. Please try again.');
-    } finally {
-      // Sempre eseguito alla fine
-      setLoading(false);
+      // Richiama il backend per lanciare il processo Python
+      const response = await fetch('http://127.0.0.1:5000/launch-analyzer', { method: 'POST' });
+      const data = await response.json();
+      console.log("Response from server:", data);
+      alert(data.message); // Mostra un alert di successo
+    } catch (error) {
+      console.error("Failed to launch the analyzer:", error);
+      alert("Error: Failed to launch the analyzer.");
     }
   };
 
   return (
     <div className="p-6 bg-white shadow-md rounded-lg w-full max-w-3xl mx-auto mt-8">
       <h2 className="text-2xl font-bold mb-4 text-gray-700">Email Analyzer</h2>
-      <textarea
-        className="w-full p-3 border rounded focus:outline-none focus:ring focus:ring-blue-300"
-        rows="6"
-        placeholder="Paste the email content here..."
-        value={emailContent}
-        onChange={(e) => setEmailContent(e.target.value)}
-      />
       <button
+        onClick={launchScreenAnalyzer}
         className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
-        onClick={analyzeEmail}
-        disabled={loading} // Disabilita il pulsante durante il caricamento
       >
-        {loading ? 'Analyzing...' : 'Analyze Email'}
+        Click here to launch
       </button>
-
-      {error && (
-        <div className="mt-4 p-3 rounded bg-red-100 text-red-700">
-          {error}
-        </div>
-      )}
-
-      {result && (
-        <div
-          className={`mt-4 p-3 rounded ${
-            result.label === 'Suspicious'
-              ? 'bg-red-100 text-red-700'
-              : 'bg-green-100 text-green-700'
-          }`}
-        >
-          <strong>Result:</strong> {result.label} <br />
-          <strong>Confidence:</strong> {(result.score * 100).toFixed(2)}%
-        </div>
-      )}
     </div>
   );
 };
