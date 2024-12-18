@@ -15,10 +15,13 @@ print("Loading AI Model...")
 model = pipeline("text-classification", model="facebook/bart-large-mnli")
 
 # Parole chiave sospette
-SUSPICIOUS_KEYWORDS = ["click here", "claim your prize", "gift card", "winner", "verify", "urgent", "reset password"]
+SUSPICIOUS_KEYWORDS = [
+    "click here", "claim your prize", "gift card", "winner", "verify",
+    "urgent", "reset password", "free trial", "limited time offer", "discount"
+]
 
 def show_alert(title, message, details):
-    """Mostra un singolo alert con tutte le segnalazioni combinate."""
+    """Mostra un alert con tutte le segnalazioni."""
     root = Tk()
     root.withdraw()
     full_message = (
@@ -53,11 +56,26 @@ def check_links_online(links):
             headers = {"User-Agent": "Mozilla/5.0"}
             response = requests.get(query, headers=headers, timeout=5)
 
-            if "phishing" in response.text.lower() or "report" in response.text.lower():
+            if "phishing" in response.text.lower():
                 suspicious_links.append(f"'{link}' → Reported as suspicious online.")
         except Exception as e:
             print(f"Error checking link {link}: {e}")
     return suspicious_links
+
+def analyze_with_model(text):
+    """Analizza il testo con il modello AI con una soglia moderata."""
+    MAX_LENGTH = 1024
+    truncated_text = text[:MAX_LENGTH]
+    try:
+        result = model(truncated_text)
+        label = result[0]['label']
+        score = result[0]['score']
+
+        if label.lower() in ["neutral", "negative"] and score >= 0.6:
+            return f"AI Analysis → '{label}' detected with confidence {score:.2f}."
+    except Exception as e:
+        print(f"Error analyzing text with model: {e}")
+    return None
 
 def capture_and_analyze():
     """Cattura lo schermo, analizza il testo e controlla i link."""
@@ -76,10 +94,15 @@ def capture_and_analyze():
             links = extract_links(text)
             suspicious_links = check_links_online(links)
 
-            # Combina i risultati in un'unica lista
+            # Analisi con il modello AI
+            ai_analysis = analyze_with_model(text)
+            if ai_analysis:
+                suspicious_phrases.append(ai_analysis)
+
+            # Combina i risultati
             results = suspicious_phrases + suspicious_links
 
-            # Mostra un singolo alert se ci sono risultati sospetti
+            # Mostra un alert se ci sono risultati sospetti
             if results:
                 print("Suspicious content found!")
                 show_alert(
