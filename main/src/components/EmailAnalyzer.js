@@ -13,29 +13,29 @@ const EmailAnalyzer = () => {
       return;
     }
 
-    setLoading(true);
+    setLoading(true); // Imposta il caricamento su true
     setError('');
     setResult('');
-
-    console.log("Sending request with content:", emailContent);
 
     try {
       console.log("Sending request to Flask API...");
       const response = await axios.post('http://127.0.0.1:5000/analyze', {
         content: emailContent,
       });
-      console.log("Response received:", response.data);
-    
+      console.log("Response:", response.data);
+
       const aiResult = response.data.result[0];
       setResult({
         label: aiResult.label,
         score: aiResult.score,
       });
     } catch (err) {
-      console.error("Error during API request:", err);
+      console.error("Request failed:", err);
       setError('❌ Error analyzing email. Please try again.');
+    } finally {
+      // Sempre eseguito alla fine
+      setLoading(false);
     }
-    
   };
 
   return (
@@ -51,7 +51,7 @@ const EmailAnalyzer = () => {
       <button
         className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
         onClick={analyzeEmail}
-        disabled={loading}
+        disabled={loading} // Disabilita il pulsante durante il caricamento
       >
         {loading ? 'Analyzing...' : 'Analyze Email'}
       </button>
